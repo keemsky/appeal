@@ -3,754 +3,401 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://img2.pic.in.th/pic/obecf051abe0d673c3ec.png">
-    
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SweetAlert2 -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Flatpickr (Date Picker) -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/th.js"></script>
-    
-    <!-- Google Fonts: Kanit -->
+    <title>ระบบร้องเรียนสถานศึกษา - โรงเรียนเสลภูมิพิทยาคม</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-    <title>ระบบแจ้งเรื่องร้องเรียน โรงเรียนบ้านทุ่งใคร</title>
     <style>
+        :root {
+            --primary-color: #4158D0; --secondary-color: #C850C0; --tertiary-color: #FFCC70;
+            --pending-bg: #ffc107; --received-bg: #17a2b8; --completed-bg: #28a745;
+            --text-color: #ffffff; --dark-text-color: #333;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Kanit', sans-serif;
-            background-color: #f0f4f8;
+            font-family: 'Prompt', sans-serif; background-color: var(--primary-color);
+            background-image: linear-gradient(43deg, var(--primary-color) 0%, var(--secondary-color) 46%, var(--tertiary-color) 100%);
+            background-attachment: fixed; color: var(--text-color); line-height: 1.6; padding: 20px; min-height: 100vh;
         }
-        /* Custom styles for drag-and-drop area */
-        .drop-zone {
-            border: 2px dashed #a0aec0;
-            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        .glass-card {
+            background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px); border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.2);
+            padding: 30px;
         }
-        .drop-zone.dragover {
-            background-color: #ebf8ff;
-            border-color: #3182ce;
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; margin-bottom: 25px; flex-wrap: wrap; }
+        .header-left { display: flex; align-items: center; }
+        .logo { width: 70px; height: 70px; margin-right: 20px; }
+        .header-title h1 { font-size: 1.8rem; font-weight: 600; margin: 0; }
+        .header-title p { font-size: 1rem; opacity: 0.9; }
+        .header-right { text-align: right; }
+        .user-status { font-size: 0.9rem; margin-bottom: 5px; }
+        .admin-login-btn, .logout-btn {
+            background-color: var(--secondary-color); color: white; border: none;
+            padding: 8px 15px; border-radius: 10px; cursor: pointer;
+            font-family: 'Prompt', sans-serif; transition: background-color 0.3s;
         }
-        /* Hide scrollbar but allow scrolling */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
+        .admin-login-btn:hover, .logout-btn:hover { background-color: #b33ca8; }
+        .logout-btn { background-color: #6c757d; display: none; margin-left: 10px; }
+        #datetime { font-size: 0.8rem; opacity: 0.8; margin-top: 5px; }
+        main { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        #complaint-form h2, #complaint-list h2 { margin-bottom: 20px; font-weight: 500; border-bottom: 2px solid rgba(255, 255, 255, 0.3); padding-bottom: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 500; }
+        .form-control {
+            width: 100%; padding: 12px; border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 10px; background-color: rgba(255, 255, 255, 0.2);
+            color: white; font-family: 'Prompt', sans-serif; font-size: 1rem;
         }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        .form-control::placeholder { color: rgba(255, 255, 255, 0.7); }
+        .form-control:focus { outline: none; border-color: rgba(255, 255, 255, 0.9); box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); }
+        textarea.form-control { resize: vertical; min-height: 120px; }
+        .file-upload-wrapper {
+            position: relative; overflow: hidden; display: inline-block; width: 100%;
+            border: 2px dashed rgba(255, 255, 255, 0.5); border-radius: 10px;
+            padding: 20px; text-align: center; cursor: pointer;
+        }
+        .file-upload-wrapper:hover { border-color: white; }
+        .file-upload-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        #file-preview { margin-top: 10px; font-size: 0.9rem; }
+        .submit-btn {
+            width: 100%; padding: 15px; border-radius: 10px; border: none;
+            background-image: linear-gradient(to right, var(--secondary-color), #e767b4);
+            color: white; font-family: 'Prompt', sans-serif; font-size: 1.1rem;
+            font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px rgba(0,0,0,0.2); }
+        .submit-btn:disabled { background-image: none; background-color: #6c757d; cursor: not-allowed; transform: none; }
+        .privacy-policy-check { margin-top: 20px; font-size: 0.9rem; }
+        .privacy-policy-check label { display: flex; align-items: center; }
+        .privacy-policy-check input { margin-right: 10px; }
+        .privacy-details { font-size: 0.8rem; opacity: 0.8; margin-top: 10px; padding-left: 25px; }
+        #complaint-list-container { max-height: 700px; overflow-y: auto; padding-right: 10px; }
+        #complaint-list-container::-webkit-scrollbar { width: 8px; }
+        #complaint-list-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.1); border-radius: 10px; }
+        #complaint-list-container::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.4); border-radius: 10px; }
+        #complaint-list-container::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.6); }
+        .complaint-card { position: relative; background: rgba(255, 255, 255, 0.1); border-radius: 15px; padding: 20px; margin-bottom: 15px; border: 1px solid rgba(255, 255, 255, 0.15); transition: transform 0.3s; }
+        .complaint-card:hover { transform: scale(1.02); }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .card-header h3 { font-size: 1.2rem; font-weight: 500; color: var(--text-color); margin-right: 10px; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; color: var(--dark-text-color); flex-shrink: 0; }
+        .status-pending { background-color: var(--pending-bg); }
+        .status-received { background-color: var(--received-bg); color: white;}
+        .card-body p { margin-bottom: 8px; opacity: 0.9; }
+        .card-body .detail-snippet { font-style: italic; opacity: 0.8; word-break: break-word; }
+        .card-footer { margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .card-info { font-size: 0.85rem; opacity: 0.8; }
+        .admin-controls { position: absolute; top: 15px; right: 20px; display: flex; align-items: center; gap: 10px; background-color: rgba(0,0,0,0.2); padding: 5px 10px; border-radius: 10px;}
+        .status-dropdown {
+            padding: 5px; border-radius: 5px; border: 1px solid #ccc; background-color: white;
+            color: var(--dark-text-color); font-family: 'Prompt', sans-serif; font-size: 0.8rem;
+        }
+        .delete-btn { background: none; border: none; color: #ff6b6b; font-size: 1.2rem; cursor: pointer; padding: 0 5px; line-height: 1; transition: color 0.2s;}
+        .delete-btn:hover { color: #dc3545; }
+        footer {
+            margin-top: 30px; padding: 20px; text-align: center;
+            background: linear-gradient(45deg, rgba(65, 88, 208, 0.7), rgba(200, 80, 192, 0.7));
+            border-radius: 20px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        footer p { font-size: 0.9rem; }
+        footer i { font-size: 1.5rem; margin-bottom: 10px; }
+        @media (max-width: 992px) { main { grid-template-columns: 1fr; } #complaint-list-container { max-height: 500px; } }
+        @media (max-width: 768px) {
+            body { padding: 15px; }
+            header { flex-direction: column; text-align: center; }
+            .header-left { flex-direction: column; margin-bottom: 15px; }
+            .header-right { text-align: center; }
+            .admin-controls { top: 10px; right: 10px;}
         }
     </style>
 </head>
-<body class="antialiased text-gray-800">
+<body>
 
-    <!-- Main Container -->
-    <div id="app" class="container mx-auto p-4 md:p-8">
-        <!-- Header -->
-        <header class="text-center mb-8">
-            <h1 class="text-3xl md:text-4xl font-bold text-blue-800">ระบบแจ้งเรื่องร้องเรียน</h1>
-            <p class="text-lg text-blue-600">โรงเรียนบ้านทุ่งใคร</p>
+    <div class="container">
+        <header>
+            <div class="header-left">
+                <img src="https://img2.pic.in.th/pic/logo__spk9594af5b232a7199.png" alt="โลโก้โรงเรียน" class="logo">
+                <div class="header-title">
+                    <h1>ระบบแจ้งเรื่องร้องเรียนสถานศึกษา โรงเรียนเสลภูมิพิทยาคม</h1>
+                    <p>ช่องทางการรับฟังความคิดเห็น</p>
+                </div>
+            </div>
+            <div class="header-right">
+                <div class="user-status">สถานะ: <span style="font-weight: bold; color: #a5dff9;">ผู้ใช้งานทั่วไป</span></div>
+                <div>
+                    <button class="admin-login-btn" onclick="promptLogin()">
+                        <i class="fas fa-user-shield"></i> สำหรับผู้ดูแล
+                    </button>
+                    <button class="logout-btn" onclick="logoutAdmin()">ออกจากระบบผู้ดูแล</button>
+                </div>
+                <div id="datetime"></div>
+            </div>
         </header>
 
-        <!-- Page Content: Switched by JS -->
-        <main id="page-content">
-            <!-- User Page (Default View) -->
-            <div id="user-page">
-                <!-- Dashboard Section -->
-                <section id="dashboard" class="mb-8 p-6 bg-white rounded-xl shadow-lg">
-                    <h2 class="text-2xl font-semibold text-blue-700 mb-4 border-b pb-2">ภาพรวมเรื่องร้องเรียน</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Stat Cards -->
-                        <div class="bg-blue-50 p-5 rounded-lg shadow-md text-center">
-                            <h3 class="text-lg font-semibold text-blue-800">เรื่องร้องเรียนทั้งหมด</h3>
-                            <p id="total-complaints" class="text-4xl font-bold text-blue-600">0</p>
-                        </div>
-                        <div class="bg-green-50 p-5 rounded-lg shadow-md text-center">
-                            <h3 class="text-lg font-semibold text-green-800">ดำเนินการแล้ว</h3>
-                            <p id="resolved-complaints" class="text-4xl font-bold text-green-600">0</p>
-                        </div>
-                        <div class="bg-yellow-50 p-5 rounded-lg shadow-md text-center">
-                            <h3 class="text-lg font-semibold text-yellow-800">อยู่ระหว่างดำเนินการ</h3>
-                            <p id="pending-complaints" class="text-4xl font-bold text-yellow-600">0</p>
-                        </div>
-                    </div>
-                    <!-- Chart -->
-                    <div class="mt-8">
-                        <canvas id="complaintsChart"></canvas>
-                    </div>
-                </section>
-
-                <!-- Complaint Form Section -->
-                <section id="complaint-form-section" class="p-6 bg-white rounded-xl shadow-lg">
-                    <h2 class="text-2xl font-semibold text-blue-700 mb-1">แจ้งเรื่องร้องเรียน</h2>
-                    <p class="text-sm text-gray-500 mb-6">*กรุณากรอกข้อมูลให้ครบถ้วนเพื่อการดำเนินการที่รวดเร็ว</p>
-                    
-                    <form id="complaint-form">
-                        <div class="space-y-6">
-                            <!-- Complaint Date -->
-                            <div>
-                                <label for="complaintDate" class="block text-sm font-medium text-gray-700">วันที่แจ้ง <span class="text-red-500">*</span></label>
-                                <input type="text" id="complaintDate" name="complaintDate" required class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                            </div>
-
-                            <!-- Anonymous Checkbox -->
-                            <div class="flex items-center">
-                                <input id="isAnonymous" name="isAnonymous" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                <label for="isAnonymous" class="ml-2 block text-sm text-gray-900">ไม่ต้องการระบุชื่อผู้แจ้ง</label>
-                            </div>
-
-                            <!-- User Info Section (toggled by JS) -->
-                            <div id="userInfoSection" class="space-y-4 border-l-4 border-blue-200 pl-4 transition-all duration-300">
-                                <div>
-                                    <label for="fullName" class="block text-sm font-medium text-gray-700">ชื่อ-นามสกุล <span class="text-red-500">*</span></label>
-                                    <input type="text" name="fullName" id="fullName" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                </div>
-                                <div>
-                                    <label for="phone" class="block text-sm font-medium text-gray-700">เบอร์โทรศัพท์ <span class="text-red-500">*</span></label>
-                                    <input type="tel" name="phone" id="phone" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                </div>
-                                <div>
-                                    <label for="email" class="block text-sm font-medium text-gray-700">อีเมล (ถ้ามี)</label>
-                                    <input type="email" name="email" id="email" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700">ต้องการให้ติดต่อกลับ <span class="text-red-500">*</span></label>
-                                    <div class="mt-2 space-x-4">
-                                        <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="contactBack" value="ต้องการ" checked> <span class="ml-2">ต้องการ</span></label>
-                                        <label class="inline-flex items-center"><input type="radio" class="form-radio text-blue-600" name="contactBack" value="ไม่ต้องการ"> <span class="ml-2">ไม่ต้องการ</span></label>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <!-- Complaint Details -->
-                            <div>
-                                <label for="complaintType" class="block text-sm font-medium text-gray-700">ประเภทเรื่องร้องเรียน <span class="text-red-500">*</span></label>
-                                <select id="complaintType" name="complaintType" required class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                                    <option>นักเรียน</option>
-                                    <option>ครู</option>
-                                    <option>บุคลากรทางการศึกษา</option>
-                                    <option>ผู้อำนวยการโรงเรียน</option>
-                                    <option>ระบบงาน</option>
-                                    <option>สิ่งแวดล้อม</option>
-                                    <option>อื่นๆ</option>
-                                </select>
-                            </div>
-
-                            <div>
-                                <label for="details" class="block text-sm font-medium text-gray-700">รายละเอียดเรื่องร้องเรียน <span class="text-red-500">*</span></label>
-                                <textarea id="details" name="details" rows="4" required class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                            </div>
-
-                            <!-- File Upload -->
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">แนบหลักฐานการร้องเรียน (ถ้ามี)</label>
-                                <div id="drop-zone" class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md drop-zone">
-                                    <div class="space-y-1 text-center">
-                                        <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true"><path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                        <div class="flex text-sm text-gray-600">
-                                            <label for="file-upload" class="relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                                                <span>อัปโหลดไฟล์</span>
-                                                <input id="file-upload" name="file-upload" type="file" class="sr-only">
-                                            </label>
-                                            <p class="pl-1">หรือลากและวาง</p>
-                                        </div>
-                                        <p class="text-xs text-gray-500">ไฟล์ประเภทใดก็ได้</p>
-                                        <p id="file-name-display" class="text-sm text-green-600 font-medium mt-2"></p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- PDPA Agreement -->
-                            <div class="flex items-start">
-                                <div class="flex items-center h-5">
-                                    <input id="pdpa" name="pdpa" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
-                                </div>
-                                <div class="ml-3 text-sm">
-                                    <label for="pdpa" class="font-medium text-gray-700">ข้าพเจ้ายอมรับ <a href="#" id="pdpa-link" class="text-blue-600 hover:underline">นโยบายคุ้มครองข้อมูลส่วนบุคคล (PDPA)</a> <span class="text-red-500">*</span></label>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Submit Button -->
-                        <div class="mt-8 pt-5 border-t border-gray-200">
-                            <div class="flex justify-end">
-                                <button type="submit" id="submit-btn" class="inline-flex justify-center py-2 px-6 border border-transparent shadow-sm text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-gray-400 disabled:cursor-not-allowed">
-                                    ส่งเรื่องร้องเรียน
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </section>
-            </div>
+        <main>
+            <section id="complaint-form" class="glass-card">
+                <h2><i class="fas fa-edit"></i> ส่งเรื่องร้องเรียน / ข้อเสนอแนะ</h2>
+                <form id="form">
+                    <div class="form-group"><label for="topic">หัวข้อเรื่อง</label><input type="text" id="topic" class="form-control" placeholder="เช่น: ปัญหาการใช้อาคารสถานที่" required></div>
+                    <div class="form-group"><label for="type">ประเภทเรื่อง</label><select id="type" class="form-control" required><option value="" disabled selected>-- กรุณาเลือกประเภท --</option><option value="ร้องเรียนทั่วไป">ร้องเรียนทั่วไป</option><option value="การให้บริการ">การให้บริการ</option><option value="สิ่งแวดล้อมและความปลอดภัย">สิ่งแวดล้อมและความปลอดภัย</option><option value="คำชมเชยและความประทับใจ">คำชมเชยและความประทับใจ</option><option value="สิทธิประโยชน์และสวัสดิการนักเรียน">สิทธิประโยชน์และสวัสดิการนักเรียน</option><option value="การเรียนการสอน">การเรียนการสอน</option><option value="ปัญหาเร่งด่วน/เหตุการณ์พิเศษ">ปัญหาเร่งด่วน/เหตุการณ์พิเศษ</option><option value="อื่น ๆ">อื่น ๆ</option></select></div>
+                    <div class="form-group"><label for="details">รายละเอียด</label><textarea id="details" class="form-control" placeholder="อธิบายรายละเอียดของปัญหาหรือข้อเสนอแนะ..." required></textarea></div>
+                    <div class="form-group"><label for="fullname">ชื่อ-สกุลผู้แจ้ง</label><input type="text" id="fullname" class="form-control" placeholder="เพื่อการติดต่อกลับ (ข้อมูลจะถูกเก็บเป็นความลับ)" required></div>
+                    <div class="form-group"><label for="phone">เบอร์โทร</label><input type="tel" id="phone" class="form-control" placeholder="เช่น 0812345678" required></div>
+                    <div class="form-group"><label for="email">อีเมล</label><input type="email" id="email" class="form-control" placeholder="เช่น example@email.com" required></div>
+                    <div class="form-group"><label>อัปโหลดไฟล์แนบ (JPG, PNG, PDF ไม่เกิน 5MB)</label><div class="file-upload-wrapper"><span><i class="fas fa-cloud-upload-alt"></i> คลิกเพื่อเลือกไฟล์</span><input type="file" id="file" accept=".jpg, .jpeg, .png, .pdf"></div><div id="file-preview"></div></div>
+                    <div class="privacy-policy-check"><label><input type="checkbox" id="privacy-check" required>ข้าพเจ้ายอมรับนโยบายความเป็นส่วนตัว</label><div class="privacy-details"><ul><li>ข้อมูลส่วนบุคคลจะถูกใช้เพื่อการติดต่อกลับเท่านั้น</li><li>ข้อร้องเรียนจะถูกเข้าถึงโดยเจ้าหน้าที่ที่เกี่ยวข้องเท่านั้น</li><li>ข้อมูลจะถูกเก็บไว้เป็นระยะเวลา 1 ปี หลังจากดำเนินการเสร็จสิ้น</li></ul></div></div>
+                    <button type="submit" class="submit-btn" id="submit-button">ส่งเรื่องร้องเรียน</button>
+                </form>
+            </section>
             
-            <!-- Admin Page (Hidden by default) -->
-            <div id="admin-page" class="hidden">
-                 <section class="p-6 bg-white rounded-xl shadow-lg">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-2xl font-semibold text-blue-700">จัดการเรื่องร้องเรียน</h2>
-                        <button id="logout-btn" class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">กลับหน้าแรก</button>
-                    </div>
-
-                    <!-- Filters -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                        <select id="filter-type" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">กรองตามประเภททั้งหมด</option>
-                            <option>นักเรียน</option>
-                            <option>ครู</option>
-                            <option>บุคลากรทางการศึกษา</option>
-                            <option>ผู้อำนวยการโรงเรียน</option>
-                            <option>ระบบงาน</option>
-                            <option>สิ่งแวดล้อม</option>
-                            <option>อื่นๆ</option>
-                        </select>
-                        <select id="filter-status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">กรองตามสถานะทั้งหมด</option>
-                            <option>ยังไม่ดำเนินการ</option>
-                            <option>กำลังดำเนินการ</option>
-                            <option>ดำเนินการแล้ว</option>
-                        </select>
-                    </div>
-
-                    <!-- Complaints Table -->
-                    <div class="overflow-x-auto no-scrollbar">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">วันที่แจ้ง</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ผู้แจ้ง</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ประเภท</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">รายละเอียด</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">หลักฐาน</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">สถานะ</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody id="complaints-table-body" class="bg-white divide-y divide-gray-200">
-                                <!-- Rows will be inserted by JS -->
-                            </tbody>
-                        </table>
-                    </div>
-                     <!-- Pagination -->
-                    <div id="pagination-controls" class="mt-4 flex justify-between items-center">
-                        <!-- JS will populate this -->
-                    </div>
-                </section>
-            </div>
+            <section id="complaint-list" class="glass-card">
+                <h2><i class="fas fa-list-alt"></i> รายการร้องเรียนล่าสุด</h2>
+                <div id="complaint-list-container"></div>
+            </section>
         </main>
-        
-        <!-- Footer -->
-        <footer class="text-center mt-12">
-            <p class="text-sm text-gray-500">&copy; <span id="current-year"></span> โรงเรียนบ้านจันทน์หอมตาเสก. All rights reserved.</p>
-            <p class="text-xs text-gray-400 mt-1">
-                <a href="#" id="admin-login-link" class="hover:underline">สำหรับเจ้าหน้าที่</a>
-            </p>
+
+        <footer>
+            <i class="fas fa-shield-alt"></i>
+            <p>โรงเรียนเสลภูมิพิทยาคมมุ่งมั่นที่จะคุ้มครองข้อมูลส่วนบุคคลของท่านตามพระราชบัญญัติคุ้มครองข้อมูลส่วนบุคคล (PDPA)</p>
         </footer>
     </div>
-    
+
     <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        // --- STATE MANAGEMENT ---
-        let allComplaints = [];
-        let currentPage = 1;
-        const rowsPerPage = 15;
-        let fileStore = null;
-        let myChart = null;
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- Elements ---
+        const form = document.getElementById('form');
+        const fileInput = document.getElementById('file');
+        const filePreview = document.getElementById('file-preview');
+        const submitButton = document.getElementById('submit-button');
+        const complaintListContainer = document.getElementById('complaint-list-container');
+        const datetimeElement = document.getElementById('datetime');
+        const userStatusSpan = document.querySelector('.user-status span');
+        const adminLoginBtn = document.querySelector('.admin-login-btn');
+        const logoutBtn = document.querySelector('.logout-btn');
 
-        // --- ELEMENTS ---
-        const userPage = document.getElementById('user-page');
-        const adminPage = document.getElementById('admin-page');
-        const adminLoginLink = document.getElementById('admin-login-link');
-        const logoutBtn = document.getElementById('logout-btn');
-        const complaintForm = document.getElementById('complaint-form');
-        const submitBtn = document.getElementById('submit-btn');
-        const pdpaCheckbox = document.getElementById('pdpa');
-        const pdpaLink = document.getElementById('pdpa-link');
-        const isAnonymousCheckbox = document.getElementById('isAnonymous');
-        const userInfoSection = document.getElementById('userInfoSection');
+        // --- State ---
+        let fileData = { base64: null, name: null, type: null };
+        let isAdminLoggedIn = false;
         
-        // File Upload Elements
-        const dropZone = document.getElementById('drop-zone');
-        const fileUploadInput = document.getElementById('file-upload');
-        const fileNameDisplay = document.getElementById('file-name-display');
+        // --- Functions ---
+        function updateDateTime() {
+            const now = new Date();
+            const options = { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false };
+            datetimeElement.textContent = `วันที่: ${now.toLocaleDateString('th-TH', options)}`;
+        }
 
-        // Admin Page Elements
-        const filterType = document.getElementById('filter-type');
-        const filterStatus = document.getElementById('filter-status');
-        const tableBody = document.getElementById('complaints-table-body');
+        fileInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (!file) { resetFileData(); return; }
+            if (file.size > 5 * 1024 * 1024) {
+                Swal.fire('ขนาดไฟล์ใหญ่เกินไป', 'กรุณาเลือกไฟล์ที่มีขนาดไม่เกิน 5MB', 'error');
+                resetFileData(); return;
+            }
+            const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+            if (!allowedTypes.includes(file.type)) {
+                Swal.fire('ประเภทไฟล์ไม่ถูกต้อง', 'รองรับเฉพาะไฟล์ JPG, PNG, และ PDF เท่านั้น', 'error');
+                resetFileData(); return;
+            }
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                fileData = { base64: e.target.result, name: file.name, type: file.type };
+                filePreview.innerHTML = `<i class="fas fa-file-alt"></i> <strong>${file.name}</strong> (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function resetFileData() {
+            fileInput.value = '';
+            fileData = { base64: null, name: null, type: null };
+            filePreview.innerHTML = '';
+        }
+
+        function renderComplaints(complaints) {
+            complaintListContainer.innerHTML = '';
+            if (!complaints || complaints.length === 0) {
+                complaintListContainer.innerHTML = '<p style="text-align:center; opacity:0.8;">ยังไม่มีรายการร้องเรียน</p>';
+                return;
+            }
+
+            complaints.forEach(c => {
+                const statusClass = c.Status === 'รอดำเนินการ' ? 'status-pending' : 'status-received';
+                const statusOptions = ['รอดำเนินการ', 'รับเรื่องแล้ว']
+                    .map(status => `<option value="${status}" ${c.Status === status ? 'selected' : ''}>${status}</option>`).join('');
+
+                const adminControls = isAdminLoggedIn ? `
+                    <div class="admin-controls">
+                        <select class="status-dropdown" onchange="confirmUpdateStatus(this, '${c.CaseID}')" data-original-status="${c.Status}">
+                            ${statusOptions}
+                        </select>
+                        <button class="delete-btn" title="ลบเรื่องร้องเรียนนี้" onclick="confirmDelete('${c.CaseID}')">&times;</button>
+                    </div>` : '';
+
+                const card = `
+                    <div class="complaint-card">
+                        ${adminControls}
+                        <div class="card-header">
+                            <h3>${c.Topic}</h3>
+                            <span class="status-badge ${statusClass}">${c.Status}</span>
+                        </div>
+                        <div class="card-body">
+                            <p><strong>ประเภท:</strong> ${c.Type}</p>
+                         
+                            <p class="detail-snippet">"<i>${c.Details.substring(0, 100)}...</i>"</p>
+                          
+                        <div class="card-footer">
+                            <div class="card-info">
+                                <span><strong>เลขที่:</strong> ${c.CaseID}</span> | <span><strong>วันที่:</strong> ${c.Timestamp}</span>
+                            </div>
+                        </div>
+                    </div>`;
+                complaintListContainer.innerHTML += card;
+            });
+        }
+
+        function loadInitialData() {
+            complaintListContainer.innerHTML = '<p style="text-align:center; opacity:0.8;">กำลังโหลดรายการร้องเรียน...</p>';
+            google.script.run
+                .withSuccessHandler(renderComplaints)
+                .withFailureHandler(err => Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถโหลดข้อมูลได้: ' + err, 'error'))
+                .getComplaints();
+        }
         
-        // --- INITIALIZATION ---
-        initialize();
-
-        function initialize() {
-            // Set year in footer
-            document.getElementById('current-year').textContent = new Date().getFullYear();
-            
-            // Setup datepicker
-            flatpickr("#complaintDate", {
-                dateFormat: "Y-m-d",
-                defaultDate: "today",
-                "locale": "th"
-            });
-
-            // Set initial state for form
-            toggleUserInfo();
-            toggleSubmitButton();
-            
-            // Add event listeners
-            addEventListeners();
-            
-            // Load initial data for dashboard
-            loadDashboardData();
-        }
-
-        function addEventListeners() {
-            adminLoginLink.addEventListener('click', showAdminLogin);
-            logoutBtn.addEventListener('click', showUserPage);
-            
-            complaintForm.addEventListener('submit', handleFormSubmit);
-            pdpaCheckbox.addEventListener('change', toggleSubmitButton);
-            isAnonymousCheckbox.addEventListener('change', toggleUserInfo);
-            pdpaLink.addEventListener('click', showPdpaModal);
-            
-            // File Upload Listeners
-            dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-            dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
-            dropZone.addEventListener('drop', handleFileDrop);
-            fileUploadInput.addEventListener('change', handleFileSelect);
-
-            // Admin Filters
-            filterType.addEventListener('change', () => { currentPage = 1; renderAdminTable(); });
-            filterStatus.addEventListener('change', () => { currentPage = 1; renderAdminTable(); });
-        }
-
-        // --- PAGE/VIEW LOGIC ---
-        function showLoader(title = 'กรุณารอสักครู่...') {
-            Swal.fire({
-                title: title,
-                allowOutsideClick: false,
-                didOpen: () => { Swal.showLoading(); }
-            });
-        }
-
-        function showUserPage(e) {
-            if(e) e.preventDefault();
-            adminPage.classList.add('hidden');
-            userPage.classList.remove('hidden');
-            loadDashboardData(); // Refresh dashboard when returning
-        }
-
-        async function showAdminLogin(e) {
-            if(e) e.preventDefault();
+        window.promptLogin = async () => {
             const { value: password } = await Swal.fire({
-                title: 'สำหรับเจ้าหน้าที่',
+                title: 'เข้าสู่ระบบผู้ดูแล',
                 input: 'password',
-                inputLabel: 'กรุณากรอกรหัสผ่าน',
-                inputPlaceholder: 'รหัสผ่าน',
+                inputPlaceholder: 'กรุณาใส่รหัสผ่าน',
                 inputAttributes: { autocapitalize: 'off', autocorrect: 'off' },
                 showCancelButton: true,
                 confirmButtonText: 'เข้าสู่ระบบ',
                 cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#3B82F6',
             });
 
             if (password) {
-                showLoader('กำลังตรวจสอบ...');
-                google.script.run
-                    .withSuccessHandler(isValid => {
-                        Swal.close();
-                        if (isValid) {
-                            userPage.classList.add('hidden');
-                            adminPage.classList.remove('hidden');
-                            loadAdminData();
-                        } else {
-                            Swal.fire('ข้อผิดพลาด', 'รหัสผ่านไม่ถูกต้อง', 'error');
-                        }
-                    })
-                    .withFailureHandler(err => {
-                        Swal.fire('ข้อผิดพลาด', err.message, 'error');
-                    })
-                    .checkPassword(password);
-            }
-        }
-        
-        // --- DATA HANDLING ---
-        function loadDashboardData() {
-            showLoader('กำลังโหลดข้อมูล...');
-            google.script.run
-                .withSuccessHandler(data => {
-                    allComplaints = data;
-                    renderDashboard(data);
-                    Swal.close();
-                })
-                .withFailureHandler(err => {
-                    Swal.fire('ข้อผิดพลาด', `ไม่สามารถโหลดข้อมูลได้: ${err.message}`, 'error');
-                })
-                .getComplaintData();
-        }
-
-        function loadAdminData() {
-            showLoader('กำลังโหลดข้อมูลผู้ดูแล...');
-            google.script.run
-                .withSuccessHandler(data => {
-                    allComplaints = data;
-                    currentPage = 1;
-                    renderAdminTable();
-                    Swal.close();
-                })
-                .withFailureHandler(err => {
-                    Swal.fire('ข้อผิดพลาด', `ไม่สามารถโหลดข้อมูลผู้ดูแลได้: ${err.message}`, 'error');
-                })
-                .getComplaintData();
-        }
-
-        // --- DASHBOARD RENDERING ---
-        function renderDashboard(data) {
-            const total = data.length;
-            const resolved = data.filter(c => c['สถานะ'] === 'ดำเนินการแล้ว').length;
-            const pending = data.filter(c => c['สถานะ'] === 'กำลังดำเนินการ').length;
-
-            document.getElementById('total-complaints').textContent = total;
-            document.getElementById('resolved-complaints').textContent = resolved;
-            document.getElementById('pending-complaints').textContent = pending;
-            
-            renderChart(data);
-        }
-
-        function renderChart(data) {
-            const ctx = document.getElementById('complaintsChart').getContext('2d');
-            const monthlyData = {};
-
-            // Initialize 12 months with 0
-            for (let i = 0; i < 12; i++) {
-                const monthName = new Date(0, i).toLocaleString('th-TH', { month: 'long' });
-                monthlyData[monthName] = 0;
-            }
-
-            data.forEach(item => {
-                if (item['วันที่แจ้ง']) {
-                    const dateParts = item['วันที่แจ้ง'].split('/');
-                    const date = new Date(`${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`);
-                    const monthName = date.toLocaleString('th-TH', { month: 'long' });
-                    if(monthlyData.hasOwnProperty(monthName)) {
-                        monthlyData[monthName]++;
-                    }
-                }
-            });
-
-            const chartLabels = Object.keys(monthlyData);
-            const chartValues = Object.values(monthlyData);
-
-            if (myChart) {
-                myChart.destroy();
-            }
-
-            myChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: chartLabels,
-                    datasets: [{
-                        label: 'จำนวนเรื่องร้องเรียนรายเดือน',
-                        data: chartValues,
-                        backgroundColor: 'rgba(59, 130, 246, 0.5)',
-                        borderColor: 'rgba(59, 130, 246, 1)',
-                        borderWidth: 1,
-                        borderRadius: 5,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                stepSize: 1
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        title: {
-                            display: true,
-                            text: 'สถิติเรื่องร้องเรียนรายเดือน',
-                            font: {
-                                size: 16,
-                                family: 'Kanit'
-                            }
-                        }
-                    }
-                }
-            });
-        }
-
-
-        // --- FORM HANDLING ---
-        function toggleSubmitButton() {
-            submitBtn.disabled = !pdpaCheckbox.checked;
-        }
-
-        function toggleUserInfo() {
-            const inputs = userInfoSection.querySelectorAll('input, select');
-            if (isAnonymousCheckbox.checked) {
-                userInfoSection.style.maxHeight = '0px';
-                userInfoSection.style.opacity = '0';
-                userInfoSection.style.padding = '0';
-                userInfoSection.style.overflow = 'hidden';
-                inputs.forEach(input => input.required = false);
-            } else {
-                userInfoSection.style.maxHeight = '500px'; // a large enough value
-                userInfoSection.style.opacity = '1';
-                userInfoSection.style.padding = '0 0 0 1rem';
-                inputs.forEach(input => {
-                  if (input.id === 'fullName' || input.id === 'phone' || input.name === 'contactBack') {
-                    input.required = true;
-                  }
-                });
-            }
-        }
-        
-        function showPdpaModal(e) {
-            e.preventDefault();
-            Swal.fire({
-                title: '<strong>นโยบายคุ้มครองข้อมูลส่วนบุคคล (PDPA)</strong>',
-                icon: 'info',
-                html: `
-                    <div class="text-left">
-                        <p class="mb-2">เราให้ความสำคัญกับความเป็นส่วนตัวของท่าน ข้อมูลที่ท่านกรอกในฟอร์มนี้จะถูกใช้เพื่อวัตถุประสงค์ในการตรวจสอบและแก้ไขปัญหาตามที่ท่านร้องเรียนเท่านั้น</p>
-                        <p class="font-semibold">ข้อมูลที่จัดเก็บ:</p>
-                        <ul class="list-disc list-inside mb-2">
-                            <li>เลขที่อ้างอิง</li>
-                            <li>ชื่อ, เบอร์โทร, อีเมล (หากระบุ)</li>
-                            <li>รายละเอียดและหลักฐานการร้องเรียน</li>
-                        </ul>
-                        <p>ข้อมูลของท่านจะถูกเก็บเป็นความลับและเข้าถึงได้โดยเจ้าหน้าที่ผู้มีส่วนเกี่ยวข้องเท่านั้น</p>
-                    </div>
-                `,
-                confirmButtonText: 'เข้าใจแล้ว',
-                confirmButtonColor: '#3B82F6',
-            });
-        }
-        
-        function handleFileDrop(e) {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const files = e.dataTransfer.files;
-            if (files.length) {
-                processFile(files[0]);
-            }
-        }
-        
-        function handleFileSelect(e) {
-            const files = e.target.files;
-            if (files.length) {
-                processFile(files[0]);
-            }
-        }
-
-        function processFile(file) {
-            fileNameDisplay.textContent = file.name;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                fileStore = {
-                    fileName: file.name,
-                    fileType: file.type,
-                    fileData: e.target.result
-                };
-            };
-            reader.readAsDataURL(file);
-        }
-
-        function handleFormSubmit(e) {
-            e.preventDefault();
-            
-            // Validation
-            if (!isAnonymousCheckbox.checked) {
-              if(!document.getElementById('fullName').value || !document.getElementById('phone').value) {
-                Swal.fire('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกชื่อ-นามสกุล และเบอร์โทรศัพท์', 'warning');
-                return;
-              }
-            }
-             if(!document.getElementById('details').value) {
-                Swal.fire('ข้อมูลไม่ครบถ้วน', 'กรุณากรอกรายละเอียดเรื่องร้องเรียน', 'warning');
-                return;
-            }
-
-
-            showLoader('กำลังส่งข้อมูล...');
-            const formData = new FormData(complaintForm);
-            let formObject = Object.fromEntries(formData.entries());
-            
-            // Remove the File object from the form data before sending to server
-            delete formObject['file-upload'];
-
-            // Add file data if it exists
-            if (fileStore) {
-                formObject = {...formObject, ...fileStore};
-            }
-            formObject.isAnonymous = isAnonymousCheckbox.checked;
-
-
-            google.script.run
-                .withSuccessHandler(response => {
-                    if (response.status === 'success') {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'สำเร็จ!',
-                            text: response.message,
-                        });
-                        complaintForm.reset();
-                        fileNameDisplay.textContent = '';
-                        fileStore = null;
-                        toggleUserInfo();
-                        toggleSubmitButton();
-                        loadDashboardData(); // Refresh dashboard
+                google.script.run.withSuccessHandler(response => {
+                    if (response.loggedIn) {
+                        isAdminLoggedIn = true;
+                        updateAdminUI();
+                        Swal.fire('สำเร็จ!', 'เข้าสู่ระบบผู้ดูแลเรียบร้อย', 'success');
                     } else {
-                        Swal.fire('เกิดข้อผิดพลาด', response.message, 'error');
+                        Swal.fire('ผิดพลาด!', 'รหัสผ่านไม่ถูกต้อง', 'error');
                     }
-                })
-                .withFailureHandler(err => {
-                    Swal.fire('เกิดข้อผิดพลาดร้ายแรง', err.message, 'error');
-                })
-                .submitComplaintForm(formObject);
-        }
-        
-        // --- ADMIN TABLE RENDERING ---
-        function renderAdminTable() {
-            const type = filterType.value;
-            const status = filterStatus.value;
-
-            const filteredData = allComplaints.filter(item => {
-                const typeMatch = type ? item['ประเภทเรื่องร้องเรียน'] === type : true;
-                const statusMatch = status ? item['สถานะ'] === status : true;
-                return typeMatch && statusMatch;
-            });
-
-            const paginatedData = filteredData.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage);
-
-            tableBody.innerHTML = ''; // Clear existing rows
-            if (paginatedData.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-gray-500">ไม่พบข้อมูล</td></tr>`;
-            }
-
-            paginatedData.forEach(item => {
-                const row = document.createElement('tr');
-                row.classList.add('hover:bg-gray-50');
-                row.innerHTML = `
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${item['วันที่แจ้ง']}</td>
-                    <td class="px-4 py-3 text-sm">
-                        <div class="font-medium">${item['ไม่ประสงค์ออกนาม'] === 'ใช่' ? '<span class="text-gray-500">ไม่ประสงค์ออกนาม</span>' : item['ชื่อ-นามสกุล']}</div>
-                        <div class="text-xs text-gray-500">${item['ไม่ประสงค์ออกนาม'] === 'ใช่' ? '' : item['เบอร์โทรศัพท์']}</div>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">${item['ประเภทเรื่องร้องเรียน']}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600 max-w-xs truncate" title="${item['รายละเอียด']}">${item['รายละเอียด']}</td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">
-                        ${item['ลิงก์หลักฐาน'] ? `<a href="${item['ลิงก์หลักฐาน']}" target="_blank" class="text-blue-600 hover:underline">ดูหลักฐาน</a>` : 'ไม่มี'}
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">
-                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(item['สถานะ'])}">
-                            ${item['สถานะ']}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium space-x-2">
-                        <button class="text-indigo-600 hover:text-indigo-900" onclick="window.manageComplaint(${item.rowNumber})">จัดการ</button>
-                        <button class="text-red-600 hover:text-red-900" onclick="window.deleteComplaint(${item.rowNumber}, '${item['ID หลักฐาน']}')">ลบ</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-            renderPaginationControls(filteredData.length);
-        }
-
-        function getStatusColor(status) {
-            switch(status) {
-                case 'ดำเนินการแล้ว': return 'bg-green-100 text-green-800';
-                case 'กำลังดำเนินการ': return 'bg-yellow-100 text-yellow-800';
-                case 'ยังไม่ดำเนินการ':
-                default:
-                    return 'bg-red-100 text-red-800';
+                }).checkAdminLogin(password);
             }
         }
+
+        window.logoutAdmin = () => {
+            isAdminLoggedIn = false;
+            updateAdminUI();
+            Swal.fire('ออกจากระบบ', 'คุณได้ออกจากระบบผู้ดูแลแล้ว', 'info');
+        }
         
-        function renderPaginationControls(totalItems) {
-            const pageCount = Math.ceil(totalItems / rowsPerPage);
-            const controls = document.getElementById('pagination-controls');
-            controls.innerHTML = '';
-            
-            if (pageCount <= 1) return;
-
-            let html = `<span class="text-sm text-gray-700">หน้า ${currentPage} จาก ${pageCount}</span><div>`;
-
-            html += `<button class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${currentPage === 1 ? 'cursor-not-allowed' : ''}" ${currentPage === 1 ? 'disabled' : ''} onclick="window.changePage(${currentPage - 1})">ก่อนหน้า</button>`;
-            html += `<button class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 ${currentPage === pageCount ? 'cursor-not-allowed' : ''}" ${currentPage === pageCount ? 'disabled' : ''} onclick="window.changePage(${currentPage + 1})">ถัดไป</button>`;
-
-            html += '</div>';
-            controls.innerHTML = html;
+        function updateAdminUI(){
+            userStatusSpan.textContent = isAdminLoggedIn ? 'ผู้ดูแลระบบ' : 'ผู้ใช้งานทั่วไป';
+            userStatusSpan.style.color = isAdminLoggedIn ? '#28a745' : '#a5dff9';
+            adminLoginBtn.style.display = isAdminLoggedIn ? 'none' : 'inline-block';
+            logoutBtn.style.display = isAdminLoggedIn ? 'inline-block' : 'none';
+            loadInitialData();
         }
 
-        // --- GLOBAL FUNCTIONS for inline onclick ---
-        window.changePage = (page) => {
-            currentPage = page;
-            renderAdminTable();
-        };
-        
-        window.manageComplaint = async (rowNumber) => {
-            const { value: newStatus } = await Swal.fire({
-                title: 'เปลี่ยนสถานะเรื่องร้องเรียน',
-                input: 'select',
-                inputOptions: {
-                    'ยังไม่ดำเนินการ': 'ยังไม่ดำเนินการ',
-                    'กำลังดำเนินการ': 'กำลังดำเนินการ',
-                    'ดำเนินการแล้ว': 'ดำเนินการแล้ว'
-                },
-                inputPlaceholder: 'เลือกสถานะ',
-                showCancelButton: true,
-                confirmButtonText: 'อัปเดต',
-                cancelButtonText: 'ยกเลิก',
-                confirmButtonColor: '#1D4ED8',
-            });
+        window.confirmUpdateStatus = (selectElement, caseId) => {
+            const newStatus = selectElement.value;
+            const originalStatus = selectElement.dataset.originalStatus;
 
-            if (newStatus) {
-                showLoader('กำลังอัปเดต...');
-                google.script.run
-                    .withSuccessHandler(res => {
-                        Swal.fire('สำเร็จ', res.message, 'success');
-                        loadAdminData();
-                    })
-                    .withFailureHandler(err => Swal.fire('ข้อผิดพลาด', err.message, 'error'))
-                    .updateStatus(rowNumber, newStatus);
-            }
-        };
-
-        window.deleteComplaint = (rowNumber, fileId) => {
             Swal.fire({
-                title: 'คุณแน่ใจหรือไม่?',
-                text: "คุณจะไม่สามารถกู้คืนข้อมูลนี้ได้!",
+                title: 'ยืนยันการเปลี่ยนสถานะ',
+                text: `เปลี่ยนสถานะเรื่อง "${caseId}" เป็น "${newStatus}" ใช่หรือไม่?`,
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#DC2626',
-                cancelButtonColor: '#6B7280',
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'ใช่, เปลี่ยนเลย!',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    google.script.run.withSuccessHandler(response => {
+                        if (response.success) {
+                            Swal.fire('สำเร็จ!', 'เปลี่ยนสถานะเรียบร้อย', 'success');
+                            loadInitialData();
+                        } else {
+                            Swal.fire('ผิดพลาด!', response.message, 'error');
+                            selectElement.value = originalStatus;
+                        }
+                    }).updateComplaintStatusInSheet(caseId, newStatus);
+                } else {
+                    selectElement.value = originalStatus;
+                }
+            });
+        }
+
+        window.confirmDelete = (caseId) => {
+            Swal.fire({
+                title: 'คุณแน่ใจหรือไม่?',
+                text: `คุณต้องการลบเรื่องร้องเรียน "${caseId}" อย่างถาวร!`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
                 confirmButtonText: 'ใช่, ลบเลย!',
                 cancelButtonText: 'ยกเลิก'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    showLoader('กำลังลบข้อมูล...');
-                    google.script.run
-                        .withSuccessHandler(res => {
-                            Swal.fire('ลบแล้ว!', res.message, 'success');
-                            loadAdminData(); // Refresh the table
-                        })
-                        .withFailureHandler(err => Swal.fire('ข้อผิดพลาด', err.message, 'error'))
-                        .deleteComplaint(rowNumber, fileId);
+                    google.script.run.withSuccessHandler(response => {
+                        if (response.success) {
+                            Swal.fire('ลบแล้ว!', 'เรื่องร้องเรียนถูกลบออกไปแล้ว', 'success');
+                            loadInitialData();
+                        } else {
+                            Swal.fire('ผิดพลาด!', response.message, 'error');
+                        }
+                    }).deleteComplaintFromSheet(caseId);
                 }
             });
-        };
+        }
+        
+        form.addEventListener('submit', function(event) {
+            event.preventDefault();
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> กำลังส่ง...';
+
+            const formData = {
+                topic: document.getElementById('topic').value, type: document.getElementById('type').value,
+                details: document.getElementById('details').value, fullname: document.getElementById('fullname').value,
+                phone: document.getElementById('phone').value, email: document.getElementById('email').value,
+                fileData: fileData.base64, fileName: fileData.name
+            };
+
+            google.script.run.withSuccessHandler(onFormSubmitSuccess).withFailureHandler(onFormSubmitFailure).processForm(formData);
+        });
+        
+        function onFormSubmitSuccess(response) {
+            resetSubmitButton();
+            if(response.success){
+                Swal.fire('ส่งสำเร็จ!', `เรื่องร้องเรียนของคุณถูกส่งเรียบร้อยแล้ว หมายเลขเรื่อง: ${response.caseId}`, 'success');
+                form.reset();
+                resetFileData();
+                loadInitialData();
+            } else {
+                Swal.fire('เกิดข้อผิดพลาด', response.message, 'error');
+            }
+        }
+        function onFormSubmitFailure(error) {
+            resetSubmitButton();
+            Swal.fire('เกิดข้อผิดพลาดร้ายแรง', error.toString(), 'error');
+        }
+        function resetSubmitButton(){
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'ส่งเรื่องร้องเรียน';
+        }
+
+        // --- Initial Load ---
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+        loadInitialData();
     });
     </script>
 </body>
