@@ -178,7 +178,7 @@
         const datetimeElement = document.getElementById('datetime');
         const userStatusSpan = document.querySelector('.user-status span');
         const adminLoginBtn = document.querySelector('.admin-login-btn');
-        const logoutBtn = document.querySelector('.logout-btn');
+        const logoutBtn = document.getElementById('logout-btn'); // Corrected ID
 
         // --- State ---
         let fileData = { base64: null, name: null, type: null };
@@ -225,8 +225,8 @@
             }
 
             complaints.forEach(c => {
-                const statusClass = c.Status === 'รอดำเนินการ' ? 'status-pending' : 'status-received';
-                const statusOptions = ['รอดำเนินการ', 'รับเรื่องแล้ว']
+                const statusClass = c.Status === 'รอดำเนินการ' ? 'status-pending' : (c.Status === 'รับเรื่องแล้ว' ? 'status-received' : 'status-completed');
+                const statusOptions = ['รอดำเนินการ', 'รับเรื่องแล้ว', 'ดำเนินการเสร็จสิ้น']
                     .map(status => `<option value="${status}" ${c.Status === status ? 'selected' : ''}>${status}</option>`).join('');
 
                 const adminControls = isAdminLoggedIn ? `
@@ -246,9 +246,9 @@
                         </div>
                         <div class="card-body">
                             <p><strong>ประเภท:</strong> ${c.Type}</p>
-                         
-                            <p class="detail-snippet">"<i>${c.Details.substring(0, 100)}...</i>"</p>
-                          
+                            <p class="detail-snippet">"<i>${c.Details.substring(0, 100)}${c.Details.length > 100 ? '...' : ''}</i>"</p>
+                            ${c.FileUrl && c.FileUrl !== 'ไม่มี' ? `<p><i class="fas fa-paperclip"></i> <a href="${c.FileUrl}" target="_blank" style="color: #a5dff9;">ไฟล์แนบ</a></p>` : ''}
+                        </div>
                         <div class="card-footer">
                             <div class="card-info">
                                 <span><strong>เลขที่:</strong> ${c.CaseID}</span> | <span><strong>วันที่:</strong> ${c.Timestamp}</span>
@@ -302,7 +302,7 @@
             userStatusSpan.style.color = isAdminLoggedIn ? '#28a745' : '#a5dff9';
             adminLoginBtn.style.display = isAdminLoggedIn ? 'none' : 'inline-block';
             logoutBtn.style.display = isAdminLoggedIn ? 'inline-block' : 'none';
-            loadInitialData();
+            loadInitialData(); // Reload complaints to show/hide admin controls
         }
 
         window.confirmUpdateStatus = (selectElement, caseId) => {
@@ -380,6 +380,7 @@
                 Swal.fire('ส่งสำเร็จ!', `เรื่องร้องเรียนของคุณถูกส่งเรียบร้อยแล้ว หมายเลขเรื่อง: ${response.caseId}`, 'success');
                 form.reset();
                 resetFileData();
+                document.getElementById('privacy-check').checked = false; // Uncheck privacy policy after submission
                 loadInitialData();
             } else {
                 Swal.fire('เกิดข้อผิดพลาด', response.message, 'error');
@@ -397,7 +398,7 @@
         // --- Initial Load ---
         updateDateTime();
         setInterval(updateDateTime, 1000);
-        loadInitialData();
+        updateAdminUI(); // Initialize UI based on login status
     });
     </script>
 </body>
